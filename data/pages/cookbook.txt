@@ -1,0 +1,17 @@
+  * Много мелких запросов в базу лучше чем один большой запрос на получение массива данных с дальнешим парсингом его элементов.
+  * Подключение по shh: ''ssh userName@host -p <portNumber>''
+  * Рестарт apache macOS: ''sudo apachectl restart''
+  * Почта корпоративная: ikapustin@wowworks.ru e2mF1Z
+  * Клонирование с длинными путями в windows: ''git clone -c core.longpaths=true''
+  * Подъем базы: ''./updateDatabase.sh -r'' пароль ''9dg6Ts74qNVvZMYK''
+  * Запуск приложения после клонирования: ''composer install'', ''php init''
+  * Настраивать в контроллерах ''VerbFilter()''
+  * Использовать для ответа ''answerBuilder()''
+  * Прописывать пути до новых сервисов в ''api/config/Routs'', с 2 методами - основной и OPTIONS
+  * Форматирование перед коммитом
+  * Ошибки ActiveRecord выводить так: ''return $this->answerBuilder()->messages(RestMessage::activeRecordErrors($model))->error();''
+  * Sentry: https://sentry.io/wowworks/php-production/
+  * phpDoc: 
+    - https://habrahabr.ru/sandbox/22836/
+    - http://ramech.net/courses/phpdoc/create-documentation.html
+  * Для разрешения конфликтов вмерджить мастера в ветку: ''git pull origin master''

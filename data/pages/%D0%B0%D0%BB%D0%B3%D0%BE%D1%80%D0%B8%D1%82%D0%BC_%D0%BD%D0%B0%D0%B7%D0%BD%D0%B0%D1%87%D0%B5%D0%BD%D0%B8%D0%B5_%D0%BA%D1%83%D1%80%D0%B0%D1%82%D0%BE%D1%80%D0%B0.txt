@@ -1,0 +1,57 @@
+**Алгоритм назначения куратора на задание.**\\
+Назначение осуществляется по cron, входной скрипт:
+''\console\controllers\TaskToCuratorAssignmentController::actionAssign''. В нем вызывается функция ''_assignCurator'', которая выбирает все задания на которые необходимо назначить куратора и в цикле вызывается метод ''\common\components\taskAssignment\TaskAssignment::assignCurator''. В методе среди прочего выполняется выбор подходящего куратора:
+    $assigner = new \common\components\taskAssignment\components\Assessment($this->task); 
+    $this->task->curator_id = $assigner->chooseCurator();
+
+Метод ''\common\components\taskAssignment\components\Assessment::chooseCurator'' служит для определения оптимального куратора для данного задания. Данная функция возвращает куратора с наибольшим приоритетом для назначения на задание:
+  $this->chosenCurator = array_search(max(array_values($weightArray)), $weightArray);
+  
+ Для выбора составляется массив данных $''weightArray'' в котором находятся подходящие кураторы и значение веса. Массив формируется функцией ''\common\components\taskAssignment\components\Assessment::_handleEstimationData''. Внутри функции создается массив ''$weights'':
+  $weights = $this->_collectEstimationData();
+ который содержит сборку разнородных оценочных данных по кураторам. Чтобы получить все веса по конкретному куратору необходимо выполнить: ''ArrayHelper::getColumn($weights, $candidateId)''. Далее в функции создается начальный массив кандидатов где ключами являются id кураторов, а значения - 0, начальные "веса" по критериям:
+  $this->candidates = array_flip($this->candidates);
+  array_walk($this->candidates, function (&$value) {
+    $value = 0;
+  });
+Изначальный массив ''$candidates'' формируется в конструкторе, вызовом функции ''_chooseCandidates()''.
+После создания всех подготовительных массивов формируется итоговый массив в формате [куртор => вес]:
+  $resultWeights = [];
+  foreach ($this->candidates as $candidateId => $weight) { //суммируем веса всех кураторов и выдаем результирующий массив весов
+    $resultWeights[$candidateId] = array_sum(ArrayHelper::getColumn($weights, $candidateId));
+  }
+  $this->candidates = $resultWeights;
+  
+Из функции возвращается массив кураторов с их суммарными весами:
+  return $this->candidates;
+
+Метод ''_collectEstimationData()'' возвращает массив критериев:
+  private function _collectEstimationData()
+  {
+    $estimation = [];
+    foreach ($this->getCriterion() as $criterion) {
+      /**
+       * @var \common\components\taskAssignment\components\criteria\Criterion $criterionEntity ;
+       */
+       $criterionEntity = new $criterion($this);
+       $estimation[$criterionEntity::KEY] = $criterionEntity->getEstimate();
+     }
+     return $estimation;
+  }
+Массив весов (критериев) формируется каждый своим классом:
+  public function getCriterion()
+  {
+    return [
+      \common\components\taskAssignment\components\criteria\CityStat::class,
+      \common\components\taskAssignment\components\criteria\TaskNumber::class,
+      \common\components\taskAssignment\components\criteria\ItCurator::class,     
+      \common\components\taskAssignment\components\criteria\OrganizationCuratorsFrequencyStatistics::class,
+      \common\components\taskAssignment\components\criteria\TakeDate::class,
+      \common\components\taskAssignment\components\criteria\OrganizationPersonal::class,
+      \common\components\taskAssignment\components\criteria\NewOrganization::class,
+      \common\components\taskAssignment\components\criteria\OrganizationCleaning::class,
+    ];
+  }
+  
+Каждый класс имеет главный метод ''getEstimate()''.
+  

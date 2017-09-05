@@ -1,0 +1,39 @@
+**Task additional requirements**
+
+Задание "Дополнительные условия" WW-449
+
+В рамках задания создана миграция создающая 2 таблицы:
+  * ''task_additional_requirement''
+  * ''task_additional_requirement_link''
+Таблица task_additional_requirement содержит следующие поля:
+  -   id 
+  -   name - VARCHAR(255) - название дополнительного условия по заданию
+  -   description - VARCHAR(255) - краткое описание дополнительного условия
+  -   type - smallint - тип дополнительного условия, необходим для однозначного определения в коде записи.
+Таблица task_additional_requirement_link
+  - id
+  - task_id - integer, not null - идентификатор задачи к которой привязано дополнительное условие
+  - task_additional_requirement_id - integer, not null - идентификатор доп.условия
+
+Для этих таблиц созданы модели:   
+  * ''\common\models\ActiveRecord\TaskAdditionalRequirement''
+  * ''\common\models\ActiveRecord\TaskAdditionalRequirementLink''
+Модель ''TaskAdditionalRequirement'' содержит кроме стандартного набора полученного после генерации Gii:
+    * Константы:
+    - TYPE_NEED_FOTO = 1 - показывает необходимость фотоотчета после выполнения задания
+    - TYPE_NEED_ACT = 2 - показывает необходимости приложить акт выполненых работ
+    - TYPE_NEED_PASS = 3 - показывает необходимость пропуска на объект
+Модель ''TaskAdditionalRequirementLink'' содержит только созданные стандартные поля и функции.
+
+При создании задания организация может включить дополнительные условия. Часть из них может нести просто информацию которая пригодится исполнителю при выполнении задания, например требование "Потребуется пропуск". Другие необходимы выполнить до момента нажатия исполнителем кнопки "Выполнено", иначе задание не закроется. Для получения списка доступных дополнительных условий для организации создан сервис
+  * ''\api\modules\v1\modules\organisation\modules\task\controllers\TaskAdditionalRequirementController::actionList''
+ для который доступен по URL: {get} /v1/organization/task/additional/requirement
+
+Для проверки выполнения дополнительных требований создан сервис ''[[проверка_дополнительных_условий_задания|\common\services\TaskAdditionalRequirementService]]''.
+При создании новых доп/условий требующих обработки перед закрытием задания, необходимо добавить обработчик в сервис. На текущий момент доступны следующие проверки:
+  - ''checkTaskPerformerFotoAttachment()''
+  - ''checkTaskPerformerAct()''
+Вызов методов осуществляется в методе ''check()''.\\
+Доступ к дополнительным условиям задания можно получить через Task relation:\\
+  * ''\common\models\traits\task\TaskRelationsTrait::getAdditionalRequirements'',
+который вернет массив записей из таблицы ''task_additional_requirement'', используя связь через таблицу ''task_additional_requirement_link''.

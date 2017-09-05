@@ -1,0 +1,7 @@
+Рейтинг исполниетеля за задания.\\
+Рейтинг хранится в следующих таблицах:
+  * user_rating
+  * user_rating_history
+  * user_aggregated_rating
+  * organization_task_rating
+  * shop_task_ratings

@@ -1,0 +1,48 @@
+
+<p>
+<strong>Загрузка файлов по <abbr title="Application Programming Interface">API</abbr></strong>
+</p>
+
+<p>
+Загрузка файлов осуществляется по <abbr title="Uniform Resource Locator">URL</abbr>: <code>/v1/common/file/upload</code><br/>
+
+Обязательные параметры:
+</p>
+<ul>
+<li class="level1"><div class="li"> {Integer} type File type</div>
+</li>
+<li class="level1"><div class="li"> {Integer} model Model id</div>
+</li>
+<li class="level1"><div class="li"> {File} file Model id</div>
+</li>
+</ul>
+
+<p>
+Параметр <code>type</code> записывается в поле <code>file.type</code>, для определения семантики типа файла, например файлы задания имеют значение <code>type</code> равным 1. Значения для типов файлов берутся из констант класса <code>\common\models\File</code>, например для файлов задания предусмотрен тип заданный константой
+</p>
+<ul>
+<li class="level1"><div class="li"><code>\common\models\File::TYPE_TASK_ATTACHMENT = 1</code>.</div>
+</li>
+</ul>
+
+<p>
+Параметр <code>model</code> определяет id той модели к которой привязывается файл, для записи в таблицу связи. Например, при загрузке файлов задания данный параметр равен <code>id</code> задания, к которому загружаемый файл относится. В контролере вызывается метод <code>\common\models\File::linkFiles($model)</code>, который принимает параметр <code>$model</code>, далее в зависимости от значения поля <code>\common\models\File::type</code> определяется в какую таблицу связи необходимо поместить запись. В случае файла задания создается запись в таблице <code>task_file</code>, где имеются 3 поля:
+</p>
+<ul>
+<li class="level1"><div class="li"> task_id</div>
+</li>
+<li class="level2"><div class="li"> file_id</div>
+</li>
+<li class="level2"><div class="li"> owner</div>
+</li>
+</ul>
+
+<p>
+Поле <code>owner</code> типа <code>smallint</code> определяет кто является владельцем файла. Значения для этого поля определяется константами класса <code>\common\models\TaskFile</code>. Существуют следующие константы:
+</p>
+<ul>
+<li class="level1"><div class="li"> \common\models\TaskFile::OWNER_PERFORMER = 1</div>
+</li>
+<li class="level1"><div class="li"> \common\models\TaskFile::OWNER_ORGANIZATION = 2</div>
+</li>
+</ul>

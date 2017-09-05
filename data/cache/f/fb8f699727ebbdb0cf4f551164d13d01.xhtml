@@ -1,0 +1,97 @@
+
+<p>
+<strong>Сервис проверки дополнительных условия задания</strong><br/>
+
+Создано в рамках задания «Дополнительные условия» WW-449.<br/>
+
+Namespace: \common\services\TaskAdditionalRequirementService.<br/>
+
+Принимает в качестве параметра конструктора объект класса Task.<br/>
+
+Содержит переменную $errors типа массив для хранения ошибок при невыполнении дополнительных условий задания. Добавление в массив осуществляется через метод:<br/>
+
+</p>
+<ul>
+<li class="level1"><div class="li"> <code>addError(string <em>$key</em>, string <em>$value</em>)</code>, <br/>
+</div>
+</li>
+</ul>
+
+<p>
+принимающий в качестве параметра строковые значения ключа и значения массива.<br/>
+
+Для получения данных массива служит метод:<br/>
+
+</p>
+<ul>
+<li class="level1"><div class="li"> <code>getErrors()</code>,<br/>
+</div>
+</li>
+</ul>
+
+<p>
+который возвращает весь массив ошибок. Главный метод сервиса<br/>
+
+</p>
+<ul>
+<li class="level1"><div class="li"> <code>check()</code>,<br/>
+</div>
+</li>
+</ul>
+
+<p>
+возвращает булево значение. Если после окончания вызова всех проверок массив ошибок пуст - возвращает true, иначе false.<br/>
+
+В самом начале метод проверяет наличие дополнительных условий включенных в задание через связь у сущности Task.
+</p>
+<ul>
+<li class="level1"><div class="li"><code>$this→task→additionalRequirements</code><br/>
+</div>
+</li>
+</ul>
+
+<p>
+Если дополнительные условия не найден сервис возвращает true. Если же у задания существуют дополнительные условия, то проверяются типы дополнительных условий для которых предусмотрена обработка. Например для проверка наличия требования фотоотчет выполняется следующим образом:
+</p>
+<pre class="code">if (Task::find()
+    -&gt;joinWith(&#039;additionalRequirements&#039;)
+    -&gt;where(&#039;task.id = :taskId and task_additional_requirement.type = :additionalRequirementType&#039;,
+     [
+       &#039;:taskId&#039; =&gt; $this-&gt;task-&gt;id,
+       &#039;:additionalRequirementType&#039; =&gt; TaskAdditionalRequirement::TYPE_NEED_FOTO
+     ])
+    -&gt;exists()) {
+      if (!$this-&gt;checkTaskPerformerFotoAttachment()) {
+           $this-&gt;addError(&#039;foto&#039;, \Yii::t(&#039;app&#039;, I18nCommonApp::TASK_PERFORMER_FOTO_NOT_FOUND));
+      }
+}</pre>
+
+<p>
+Если среди дополнительных условий найдено одно с типом <code>TaskAdditionalRequirement::TYPE_NEED_FOTO</code>, то вызывается метод<br/>
+
+<code>checkTaskPerformerFotoAttachment()</code>, который возвращает булево значение. Реализация метода:<br/>
+
+</p>
+<pre class="code">protected function checkTaskPerformerFotoAttachment(): bool
+{
+  return TaskFile::find()-&gt;joinWith(&#039;file&#039;)
+    -&gt;where(&#039;task_id = :taskId&#039;, [&#039;:taskId&#039; =&gt; $this-&gt;task-&gt;id])
+    -&gt;andWhere(&#039;owner = :fileOwner&#039;, [&#039;:fileOwner&#039; =&gt; TaskFile::OWNER_PERFORMER])
+    -&gt;andWhere(&#039;file.type = :fileType&#039;, [&#039;:fileType&#039; =&gt; File::TYPE_TASK_ATTACHMENT])
+    -&gt;exists();
+}</pre>
+<!-- EDIT1 PLUGIN_WRAP_START [0-] --><div class="wrap_center wrap_round wrap_important plugin_wrap" style="width: 100%;"><pre class="code">При выполнении проверки на наличие файла важно чтобы файлы прикрепленные исполнителем к заданию
+имели тип TaskFile::OWNER_PERFORMER равный 1. Данное значение выставляется в таблице task_file 
+в поле owner.</pre>
+</div><!-- EDIT2 PLUGIN_WRAP_END [0-] -->
+<p>
+Если проверка на наличие файла фототчета не прошла, то добавляем в массив ошибок новую запись, где ключом выступает причина ошибки, а значением соответствующее информативное сообщение.
+</p>
+
+<p>
+После выполнения проверок происходит проверка на наличие ошибок в массиве ошибок и если ошибок нет возвращается true, иначе false.
+</p>
+<pre class="code">if ($this-&gt;errors) {
+     return false;
+}</pre>
+<pre class="code">return true;</pre>

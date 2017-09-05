@@ -1,0 +1,51 @@
+**Сервис проверки дополнительных условия задания**\\
+Создано в рамках задания «Дополнительные условия» WW-449.\\
+Namespace: \common\services\TaskAdditionalRequirementService.\\
+Принимает в качестве параметра конструктора объект класса Task.\\
+Содержит переменную $errors типа массив для хранения ошибок при невыполнении дополнительных условий задания. Добавление в массив осуществляется через метод:\\
+  * ''addError(string //$key//, string //$value//)'', \\
+принимающий в качестве параметра строковые значения ключа и значения массива.\\
+Для получения данных массива служит метод:\\
+  * ''getErrors()'',\\
+который возвращает весь массив ошибок. Главный метод сервиса\\
+  * ''check()'',\\
+возвращает булево значение. Если после окончания вызова всех проверок массив ошибок пуст - возвращает true, иначе false.\\
+В самом начале метод проверяет наличие дополнительных условий включенных в задание через связь у сущности Task.  
+  *''$this->task->additionalRequirements''\\
+Если дополнительные условия не найден сервис возвращает true. Если же у задания существуют дополнительные условия, то проверяются типы дополнительных условий для которых предусмотрена обработка. Например для проверка наличия требования фотоотчет выполняется следующим образом:
+  if (Task::find()
+      ->joinWith('additionalRequirements')
+      ->where('task.id = :taskId and task_additional_requirement.type = :additionalRequirementType',
+       [
+         ':taskId' => $this->task->id,
+         ':additionalRequirementType' => TaskAdditionalRequirement::TYPE_NEED_FOTO
+       ])
+      ->exists()) {
+        if (!$this->checkTaskPerformerFotoAttachment()) {
+             $this->addError('foto', \Yii::t('app', I18nCommonApp::TASK_PERFORMER_FOTO_NOT_FOUND));
+        }
+  }
+Если среди дополнительных условий найдено одно с типом ''TaskAdditionalRequirement::TYPE_NEED_FOTO'', то вызывается метод\\
+''checkTaskPerformerFotoAttachment()'', который возвращает булево значение. Реализация метода:\\
+  protected function checkTaskPerformerFotoAttachment(): bool
+  {
+    return TaskFile::find()->joinWith('file')
+      ->where('task_id = :taskId', [':taskId' => $this->task->id])
+      ->andWhere('owner = :fileOwner', [':fileOwner' => TaskFile::OWNER_PERFORMER])
+      ->andWhere('file.type = :fileType', [':fileType' => File::TYPE_TASK_ATTACHMENT])
+      ->exists();
+  }
+<WRAP center round important 100%>
+  При выполнении проверки на наличие файла важно чтобы файлы прикрепленные исполнителем к заданию
+  имели тип TaskFile::OWNER_PERFORMER равный 1. Данное значение выставляется в таблице task_file 
+  в поле owner.
+</WRAP>
+
+Если проверка на наличие файла фототчета не прошла, то добавляем в массив ошибок новую запись, где ключом выступает причина ошибки, а значением соответствующее информативное сообщение.
+
+После выполнения проверок происходит проверка на наличие ошибок в массиве ошибок и если ошибок нет возвращается true, иначе false.
+  if ($this->errors) {
+       return false;
+  }
+
+  return true;

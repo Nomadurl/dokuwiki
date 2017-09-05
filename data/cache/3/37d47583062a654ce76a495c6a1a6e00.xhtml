@@ -1,0 +1,112 @@
+
+<p>
+<strong>Task additional requirements</strong>
+</p>
+
+<p>
+Задание «Дополнительные условия» WW-449
+</p>
+
+<p>
+В рамках задания создана миграция создающая 2 таблицы:
+</p>
+<ul>
+<li class="level1"><div class="li"> <code>task_additional_requirement</code></div>
+</li>
+<li class="level1"><div class="li"> <code>task_additional_requirement_link</code></div>
+</li>
+</ul>
+
+<p>
+Таблица task_additional_requirement содержит следующие поля:
+</p>
+<ol>
+<li class="level1"><div class="li">   id </div>
+</li>
+<li class="level1"><div class="li">   name - VARCHAR(255) - название дополнительного условия по заданию</div>
+</li>
+<li class="level1"><div class="li">   description - VARCHAR(255) - краткое описание дополнительного условия</div>
+</li>
+<li class="level1"><div class="li">   type - smallint - тип дополнительного условия, необходим для однозначного определения в коде записи.</div>
+</li>
+</ol>
+
+<p>
+Таблица task_additional_requirement_link
+</p>
+<ol>
+<li class="level1"><div class="li"> id</div>
+</li>
+<li class="level1"><div class="li"> task_id - integer, not null - идентификатор задачи к которой привязано дополнительное условие</div>
+</li>
+<li class="level1"><div class="li"> task_additional_requirement_id - integer, not null - идентификатор доп.условия</div>
+</li>
+</ol>
+
+<p>
+Для этих таблиц созданы модели:
+</p>
+<ul>
+<li class="level1"><div class="li"> <code>\common\models\ActiveRecord\TaskAdditionalRequirement</code></div>
+</li>
+<li class="level2"><div class="li"> <code>\common\models\ActiveRecord\TaskAdditionalRequirementLink</code></div>
+</li>
+</ul>
+
+<p>
+Модель <code>TaskAdditionalRequirement</code> содержит кроме стандартного набора полученного после генерации Gii:
+</p>
+<ul>
+<li class="level1"><div class="li"> Константы:</div>
+</li>
+</ul>
+<ol>
+<li class="level2"><div class="li"> TYPE_NEED_FOTO = 1 - показывает необходимость фотоотчета после выполнения задания</div>
+</li>
+<li class="level2"><div class="li"> TYPE_NEED_ACT = 2 - показывает необходимости приложить акт выполненых работ</div>
+</li>
+<li class="level2"><div class="li"> TYPE_NEED_PASS = 3 - показывает необходимость пропуска на объект</div>
+</li>
+</ol>
+
+<p>
+Модель <code>TaskAdditionalRequirementLink</code> содержит только созданные стандартные поля и функции.
+</p>
+
+<p>
+При создании задания организация может включить дополнительные условия. Часть из них может нести просто информацию которая пригодится исполнителю при выполнении задания, например требование «Потребуется пропуск». Другие необходимы выполнить до момента нажатия исполнителем кнопки «Выполнено», иначе задание не закроется. Для получения списка доступных дополнительных условий для организации создан сервис
+</p>
+<ul>
+<li class="level1"><div class="li"> <code>\api\modules\v1\modules\organisation\modules\task\controllers\TaskAdditionalRequirementController::actionList</code></div>
+</li>
+</ul>
+
+<p>
+ для который доступен по <abbr title="Uniform Resource Locator">URL</abbr>: {get} /v1/organization/task/additional/requirement
+</p>
+
+<p>
+Для проверки выполнения дополнительных требований создан сервис <code><a href="/dokuwiki/doku.php?id=%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0_%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D1%8B%D1%85_%D1%83%D1%81%D0%BB%D0%BE%D0%B2%D0%B8%D0%B9_%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D1%8F" class="wikilink1" title="проверка_дополнительных_условий_задания">\common\services\TaskAdditionalRequirementService</a></code>.
+При создании новых доп/условий требующих обработки перед закрытием задания, необходимо добавить обработчик в сервис. На текущий момент доступны следующие проверки:
+</p>
+<ol>
+<li class="level1"><div class="li"> <code>checkTaskPerformerFotoAttachment()</code></div>
+</li>
+<li class="level1"><div class="li"> <code>checkTaskPerformerAct()</code></div>
+</li>
+</ol>
+
+<p>
+Вызов методов осуществляется в методе <code>check()</code>.<br/>
+
+Доступ к дополнительным условиям задания можно получить через Task relation:<br/>
+
+</p>
+<ul>
+<li class="level1"><div class="li"> <code>\common\models\traits\task\TaskRelationsTrait::getAdditionalRequirements</code>,</div>
+</li>
+</ul>
+
+<p>
+который вернет массив записей из таблицы <code>task_additional_requirement</code>, используя связь через таблицу <code>task_additional_requirement_link</code>.
+</p>
